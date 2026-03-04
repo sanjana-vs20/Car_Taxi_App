@@ -29,14 +29,35 @@ const Sidebar = () => {
         }
     }
 
+    const deleteImage = async ()=>{
+        try {
+            const {data} = await axios.delete('/api/owner/delete-image')
+            if(data.success){
+                fetchUser()
+                toast.success(data.message)
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
   return (
     <div className='relative min-h-screen md:flex flex-col items-center pt-8 max-w-13 md:max-w-60
     w-full border-r border-borderColor text-sm'>
 
         <div className='group relative'>
             <label htmlFor="image">
-                <img src={image ? URL.createObjectURL(image) : user?.image 
-                    || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=300"} alt="" className='h-9 md:h-14 w-9 md:w-14 rounded-full mx-auto'/>
+                {image ? (
+                    <img src={URL.createObjectURL(image)} alt="" className='h-9 md:h-14 w-9 md:w-14 rounded-full mx-auto object-cover'/>
+                ) : user?.image ? (
+                    <img src={user.image} alt="" className='h-9 md:h-14 w-9 md:w-14 rounded-full mx-auto object-cover'/>
+                ) : (
+                    <div className='h-9 md:h-14 w-9 md:w-14 rounded-full mx-auto bg-blue-500 flex items-center justify-center text-white font-bold text-lg md:text-2xl'>
+                        {user?.name?.charAt(0)}
+                    </div>
+                )}
                 <input type="file" id='image' accept="image/*" hidden onChange={e=> setImage(e.target.files[0])}/>
 
                 <div className='absolute hidden top-0 right-0 left-0 bottom-0 bg-black/10 rounded-full group-hover:flex items-center justify-center cursor-pointer'>
@@ -47,6 +68,9 @@ const Sidebar = () => {
         {image && (
             <button className='absolute top-0 right-0 flex p-2 gap-1 bg-primary/10 text-primary cursor-pointer' onClick={updateImage}>Save 
             <img src={assets.check_icon} width={13} alt=""/></button>
+        )}
+        {user?.image && !image && (
+            <button className='mt-2 text-xs text-red-500 hover:text-red-700' onClick={deleteImage}>Delete Photo</button>
         )}
 
         <p className='mt-2 text-base max-md:hidden'>{user?.name}</p>

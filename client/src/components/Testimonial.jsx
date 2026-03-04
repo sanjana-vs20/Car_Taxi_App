@@ -1,29 +1,33 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Title from './Title'
 import { assets } from '../assets/assets';
 import {motion} from 'motion/react'
+import axios from 'axios'
 
 const Testimonial = () => {
 
-    const testimonials = [
-        { name: "Emma Rodriguez", location: "Barcelona, Spain", 
-            image: assets.testimonial_image_1, 
-            testimonial: "Exceptional service and attention to detail." 
-        },
-        { name: "John Smith", location: "New York, USA", 
-            image: assets.testimonial_image_2, 
-            testimonial: "Exceptional service. Made my trip so easy." 
-        },
-        { name: "Ava Johnson", location: "Sydney, Australia", 
-            image: assets.testimonial_image_1, 
-            testimonial: "I highly recommend Carzio." 
+    const [testimonials, setTestimonials] = useState([])
+
+    useEffect(() => {
+        const fetchFeedbacks = async () => {
+            try {
+                const {data} = await axios.get('/api/feedback/all')
+                if (data.success) {
+                    setTestimonials(data.feedbacks)
+                }
+            } catch (error) {
+                console.error(error)
+            }
         }
-    ];
+        fetchFeedbacks()
+    }, [])
+
+    if (testimonials.length === 0) return null
 
   return (
     <div className="py-28 px-6 md:px-16 lg:px-24 xl:px-44">
 
-        <Title title="What Our Customers Say" subTitle="DIscover why discrening travelers choose StayVEnture for their luxury accomodations around the world."/>
+        <Title title="What Our Customers Say" subTitle="Discover why customers choose Carzio for their car rental needs."/>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-18">
                 {testimonials.map((testimonial, index) => (
@@ -35,19 +39,23 @@ const Testimonial = () => {
                     
                     key={index} className="bg-white p-6 rounded-xl shadow-lg hover:-translate-y-1 transition-all duration-500">
                         <div className="flex items-center gap-3">
-                            <img className="w-12 h-12 rounded-full" src={testimonial.image} alt={testimonial.name} />
+                            {testimonial.image ? (
+                                <img className="w-12 h-12 rounded-full object-cover" src={testimonial.image} alt={testimonial.name} />
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                                    {testimonial.name.charAt(0)}
+                                </div>
+                            )}
                             <div>
                                 <p className="text-xl">{testimonial.name}</p>
-                                <p className="text-gray-500">{testimonial.location}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1 mt-4">
-                            {Array(5).fill(0).map((_, index) => (
-
+                            {Array(testimonial.rating).fill(0).map((_, index) => (
                                 <img key={index} src={assets.star_icon} alt="star-icon" />
                             ))}
                         </div>
-                        <p className="text-gray-500 max-w-90 mt-4 font-light">"{testimonial.testimonial}"</p>
+                        <p className="text-gray-500 max-w-90 mt-4 font-light">"{testimonial.comment}"</p>
                     </motion.div>
                 ))}
             </div>

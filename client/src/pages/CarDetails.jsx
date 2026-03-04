@@ -4,29 +4,65 @@ import { assets, dummyCarData } from '../assets/assets'
 import Loader from '../components/Loader'
 import { useAppContext } from '../context/AppContext'
 import {motion} from 'motion/react'
+import toast from 'react-hot-toast'
 
 const CarDetails = () => {
 
   const {id} = useParams()
 
-  const {cars, axios, pickupDate, setPickupDate, returnDate, setReturnDate} = useAppContext()
+  const {cars, axios, pickupDate, setPickupDate, returnDate, setReturnDate, user} = useAppContext()
   
   const navigate = useNavigate()
   const [car, setCar] = useState(null)
+  const [showBookingModal, setShowBookingModal] = useState(false)
+  const [bookingType, setBookingType] = useState('self-pickup')
   const currency = import.meta.env.VITE_CURRENCY
 
   const handleSubmit = async (e)=>{
     e.preventDefault();
+    if(!user){
+      toast.error('Please login to book a car')
+      return
+    }
+    
+    // Check availability
+    try {
+      const {data} = await axios.post('/api/bookings/check-availability', {
+        location: car.location,
+        pickupDate,
+        returnDate
+      })
+      
+      if(data.success){
+        const isCarAvailable = data.availableCars.some(c => c._id === car._id)
+        if(!isCarAvailable){
+          toast.error('Car is not available for selected dates')
+          return
+        }
+      }
+    } catch (error) {
+      toast.error('Error checking availability')
+      return
+    }
+    
+    setShowBookingModal(true)
+  }
+
+  const confirmBooking = async () => {
     try {
       const {data} = await axios.post('/api/bookings/create', {
         car: id,
         pickupDate, 
-        returnDate
+        returnDate,
+        bookingType
       })
 
       if (data.success){
         toast.success(data.message)
-        navigate('/my-bookings')
+        setPickupDate('')
+        setReturnDate('')
+        setShowBookingModal(false)
+        navigate('/owner/my-bookings')
       }else{
         toast.error(data.message)
       }
@@ -38,6 +74,13 @@ const CarDetails = () => {
   useEffect(()=>{
     setCar(cars.find(car => car._id === id))
   },[cars, id])
+
+  useEffect(()=>{
+    return () => {
+      setPickupDate('')
+      setReturnDate('')
+    }
+  },[])
 
   return car ?  (
     <div className='px-6 md:px-16 lg:px-24 xl:px-32 mt-16'>
@@ -73,7 +116,7 @@ const CarDetails = () => {
               {[
                 {icon: assets.users_icon, text: `${car.seating_capacity} 
                 Seats`},
-                {icon: assets.fuel_icon, text: car.fuel_type},
+                {icon: assets.fuel_icon, text: car.fuel},
                 {icon: assets.car_icon, text: car.transmission},
                 {icon: assets.location_icon, text: car.location},
               ].map(({icon, text})=>(
@@ -97,7 +140,7 @@ const CarDetails = () => {
                <h1 className='text-xl font-medium mb-3'>Features</h1>
                <ul className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                 {
-                  ["360 Camera", "Bluetooth", "GPS", "Heated Seats", "Rear View Mirror"].map((item)=>(
+                  (car.features && car.features.length > 0 ? car.features : ["360 Camera", "Bluetooth", "GPS", "Heated Seats", "Rear View Mirror"]).map((item)=>(
                     <li key={item} className='flex items-center text-gray-500'>
                       <img src={assets.check_icon} className='h-4 mr-2' alt=""/>
                       {item}
@@ -129,7 +172,7 @@ const CarDetails = () => {
             <div className='flex flex-col gap-2'>
               <label htmlFor="return-date">Return Date</label>
               <input value={returnDate} onChange={(e)=>setReturnDate(e.target.value)} 
-              type="date" className='border border-borderColor px-3 py-2 rounded-lg' required id='return-date'/>
+              type="date" className='border border-borderColor px-3 py-2 rounded-lg' required id='return-date' min={pickupDate || new Date().toISOString().split('T')[0]}/>
             </div>
 
             <button className='w-full bg-primary hover:bg-primary-dull
@@ -140,6 +183,58 @@ const CarDetails = () => {
         </motion.form>
 
       </div>
+
+      {showBookingModal && (
+        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
+          <div className='bg-white rounded-xl p-6 max-w-md w-full mx-4'>
+            <h2 className='text-xl font-semibold mb-4'>Select Booking Type</h2>
+            <div className='space-y-3 mb-6'>
+              <label className='flex items-center gap-3 p-4 border border-borderColor rounded-lg cursor-pointer hover:bg-light'>
+                <input
+                  type='radio'
+                  name='bookingType'
+                  value='self-pickup'
+                  checked={bookingType === 'self-pickup'}
+                  onChange={(e) => setBookingType(e.target.value)}
+                  className='w-4 h-4'
+                />
+                <div>
+                  <p className='font-medium'>Self Pickup</p>
+                  <p className='text-sm text-gray-500'>Drive the car yourself</p>
+                </div>
+              </label>
+              <label className='flex items-center gap-3 p-4 border border-borderColor rounded-lg cursor-pointer hover:bg-light'>
+                <input
+                  type='radio'
+                  name='bookingType'
+                  value='with-driver'
+                  checked={bookingType === 'with-driver'}
+                  onChange={(e) => setBookingType(e.target.value)}
+                  className='w-4 h-4'
+                />
+                <div>
+                  <p className='font-medium'>With Driver</p>
+                  <p className='text-sm text-gray-500'>Professional driver included</p>
+                </div>
+              </label>
+            </div>
+            <div className='flex gap-3'>
+              <button
+                onClick={() => setShowBookingModal(false)}
+                className='flex-1 px-4 py-2 border border-borderColor rounded-lg hover:bg-light'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBooking}
+                className='flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dull'
+              >
+                Confirm Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   ) : <Loader/>

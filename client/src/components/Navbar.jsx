@@ -11,7 +11,16 @@ const Navbar = () => {
 
     const location = useLocation()
     const [open, setOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
     const navigate = useNavigate()
+
+    const handleSearch = (e) => {
+        e.preventDefault()
+        if(searchQuery.trim()){
+            navigate(`/cars?search=${searchQuery}`)
+            setSearchQuery('')
+        }
+    }
 
     const changeRole = async ()=>{
         try {
@@ -50,11 +59,11 @@ const Navbar = () => {
                 </Link>
             ))}
 
-            <div className='hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56'>
-                <input type='text' className='py-1.5 w-full bg-transparent outline-none
-                placeholder-gray-500' placeholder='Search products'/>
-                <img src={assets.search_icon} alt="search" />
-            </div>
+            <form onSubmit={handleSearch} className='hidden lg:flex items-center text-sm gap-2 border border-borderColor px-3 rounded-full max-w-56'>
+                <input type='text' value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} className='py-1.5 w-full bg-transparent outline-none
+                placeholder-gray-500' placeholder='Search cars'/>
+                <button type='submit'><img src={assets.search_icon} alt="search" /></button>
+            </form>
             <div className='flex max-sm:flex-col items-start sm:items-center gap-6'>
 
                 <button
@@ -68,7 +77,6 @@ const Navbar = () => {
                         navigate('/owner')
                         } else {
                         await changeRole()
-                        navigate('/owner')
                         }
                     }}
                     className='cursor-pointer'

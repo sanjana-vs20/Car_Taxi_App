@@ -50,6 +50,7 @@ const ManageBookings = () => {
               <th className='p-3 font-medium'>Car</th>
               <th className='p-3 font-medium max-md:hidden'>Date Range</th>
               <th className='p-3 font-medium'>Total</th>
+              <th className='p-3 font-medium max-md:hidden'>Type</th>
               <th className='p-3 font-medium max-md:hidden'>Payment</th>
               <th className='p-3 font-medium'>Actions</th>
             </tr>
@@ -67,6 +68,12 @@ const ManageBookings = () => {
                   {booking.pickupDate.split('T')[0]} to {booking.returnDate.split('T')[0]}
                 </td>
                 <td className='p-3'>{currency} {booking.price}</td>
+
+                <td className='p-3 max-md:hidden'>
+                  <span className='bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs'>
+                    {booking.bookingType === 'with-driver' ? 'With Driver' : 'Self Pickup'}
+                  </span>
+                </td>
 
                 <td className='p-3 max-md:hidden'>
                   <span className='bg-gray-100 px-3 py-1 rounded-full text-xs'>offline</span>

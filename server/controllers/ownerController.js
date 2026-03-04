@@ -2,6 +2,7 @@ import imagekit from "../configs/imageKit.js";
 import Booking from "../models/Booking.js";
 import Car from "../models/Car.js"
 import User from "../models/User.js";
+import Feedback from "../models/Feedback.js";
 import fs from "fs";
 
 
@@ -169,8 +170,22 @@ export const updateUserImage = async (req, res)=>{
         const image = optimizedImageURL;
 
         await User.findByIdAndUpdate(_id, {image});
+        await Feedback.updateMany({user: _id}, {image});
         res.json({success: true, message: "Image Uploaded"})
 
+    } catch (error) {
+        console.log(error.message);
+        res.json({success: false, message: error.message})
+    }
+}
+
+//api to delete user image
+export const deleteUserImage = async (req, res)=>{
+    try {
+        const { _id } = req.user;
+        await User.findByIdAndUpdate(_id, {image: ''});
+        await Feedback.updateMany({user: _id}, {image: ''});
+        res.json({success: true, message: "Image Deleted"})
     } catch (error) {
         console.log(error.message);
         res.json({success: false, message: error.message})

@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
 import Title from '../../components/owner/Title'
-import { assets } from '../../assets/assets'
+import { assets, cityList } from '../../assets/assets'
 import { useAppContext } from '../../context/AppContext'
+import toast from 'react-hot-toast'
 
 const AddCar = () => {
 
   const {axios, currency} = useAppContext()
 
   const [image, setImage] = useState(null)
+  const [features, setFeatures] = useState('')
   const [car, setCar] = useState({
     brand: '',
     model: '',
@@ -15,7 +17,7 @@ const AddCar = () => {
     pricePerDay: 0,
     category: '',
     transmission: '',
-    fuel_type: '',
+    fuel: '',
     seating_capacity: 0,
     location: '',
     description: '',
@@ -28,15 +30,16 @@ const AddCar = () => {
 
     setIsLoading(true)
     try {
-      const  formData = new formData()
+      const  formData = new FormData()
       formData.append('image', image)
-      formData.append('carData', JSON.stringify(car))
+      formData.append('carData', JSON.stringify({...car, features: features.split(',').map(f => f.trim()).filter(f => f)}))
 
       const {data} = await axios.post('/api/owner/add-car', formData)
 
       if(data.success){
         toast.success(data.message)
         setImage(null)
+        setFeatures('')
         setCar({
           brand: '',
           model: '',
@@ -44,7 +47,7 @@ const AddCar = () => {
           pricePerDay: 0,
           category: '',
           transmission: '',
-          fuel_type: '',
+          fuel: '',
           seating_capacity: 0,
           location: '',
           description: '',
@@ -126,7 +129,7 @@ const AddCar = () => {
 
           <div className='flex flex-col w-full'>
             <label>Fuel Type</label>
-            <select onChange={e=> setCar({...car, fuel_type: e.target.value})} value={car.fuel_type}
+            <select onChange={e=> setCar({...car, fuel: e.target.value})} value={car.fuel}
               className='px-3 py-2 mt-1 border border-borderColor rounded-md outline-none'>
               <option value="">Select a fuel type</option>
               <option value="Gas">Gas</option>
@@ -148,10 +151,9 @@ const AddCar = () => {
             <select onChange={e=> setCar({...car, location: e.target.value})} value={car.location}
               className='px-3 py-2 mt-1 border border-borderColor rounded-md outline-none'>
               <option value="">Select a location</option>
-              <option value="New York">New York</option>
-              <option value="Los Angeles">Los Angeles</option>
-              <option value="Houstan">Houstan</option>
-              <option value="Chicago">Chicago</option>
+              {cityList.map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
             </select>
         </div>
 
@@ -160,6 +162,13 @@ const AddCar = () => {
             <textarea rows={5} placeholder='Type here' required className='px-3 py-2 mt-1 border border-borderColor
             rounded-md outline-none' value={car.description} onChange={e=> setCar({...car, description: e.target.value})}>
             </textarea>
+          </div>
+
+        <div className='flex flex-col w-full'>
+            <label>Features (comma separated)</label>
+            <input type='text' placeholder='e.g., 360 Camera, Bluetooth, GPS' className='px-3 py-2 mt-1 border border-borderColor
+            rounded-md outline-none' value={features} onChange={e=> setFeatures(e.target.value)}/>
+            <p className='text-xs text-gray-400 mt-1'>Separate features with commas</p>
           </div>
 
           <button className='flex items-center gap-2 px-4 py-2.5 mt-4 bg-primary text-white rounded-md font-medium w-max cursor-pointer'>

@@ -12,6 +12,7 @@ const Cars = () => {
   const pickupLocation = searchParams.get('pickupLocation')
   const pickupDate = searchParams.get('pickupDate')
   const returnDate = searchParams.get('returnDate')
+  const searchQuery = searchParams.get('search')
 
   const {cars, axios} = useAppContext()
 
@@ -22,16 +23,17 @@ const Cars = () => {
   const [filteredCars, setFilteredCars] = useState([])
 
   const applyFilter = async ()=>{
-    if(input === ''){
+    if(input === '' && !searchQuery){
       setFilteredCars(cars)
       return null
     }
 
+    const searchTerm = input || searchQuery || ''
     const filtered = cars.slice().filter((car)=>{
-      return car.brand.toLowerCase().includes(input.toLowerCase())
-      || car.model.toLowerCase().includes(input.toLowerCase())
-      || car.category.toLowerCase().includes(input.toLowerCase())
-      || car.transmission.toLowerCase().includes(input.toLowerCase())
+      return car.brand.toLowerCase().includes(searchTerm.toLowerCase())
+      || car.model.toLowerCase().includes(searchTerm.toLowerCase())
+      || car.category.toLowerCase().includes(searchTerm.toLowerCase())
+      || car.transmission.toLowerCase().includes(searchTerm.toLowerCase())
     })
     setFilteredCars(filtered)
   }
@@ -47,6 +49,12 @@ const Cars = () => {
       return null
     }
   }
+
+  useEffect(()=>{
+    if(searchQuery){
+      setInput(searchQuery)
+    }
+  },[searchQuery])
 
   useEffect(()=>{
     isSearchDate && searchCarAvailability()

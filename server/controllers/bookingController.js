@@ -37,7 +37,7 @@ export const checkAvailabilityOfCar = async (req, res)=>{
 export const createBooking = async (req, res)=>{
     try {
         const {_id} = req.user;
-        const {car, pickupDate, returnDate} = req.body;
+        const {car, pickupDate, returnDate, bookingType} = req.body;
 
         const isAvailable = await checkAvailability(car, pickupDate, returnDate)
         if(!isAvailable){
@@ -50,7 +50,7 @@ export const createBooking = async (req, res)=>{
         const noOfDays = Math.ceil((returned - picked) / (1000 * 60 * 60 * 24))
         const price = carData.pricePerDay * noOfDays;
 
-        await Booking.create({car, owner: carData.owner, user:_id, pickupDate, returnDate, price})
+        await Booking.create({car, owner: carData.owner, user:_id, pickupDate, returnDate, price, bookingType})
         res.json({success: true, message: "Booking Created"})
 
     } catch (error) {
